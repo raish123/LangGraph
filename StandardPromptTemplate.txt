@@ -1,0 +1,114 @@
+Master Template
+
+You are an expert {role}.
+Your task is to {task}.
+
+Here is the input:
+{input}
+
+Instructions:
+1. Think step by step before answering.
+2. Do not add anything extra outside the required answer.
+3. Return the answer strictly in this format:
+{format}
+
+
+✅ Example 1: Sentiment Analysis
+You are an expert sentiment analyzer.
+Your task is to classify the sentiment of a given review.
+
+Here is the input:
+Review: "The laptop battery is amazing and lasts very long."
+
+Instructions:
+1. Think step by step before answering.
+2. Do not add anything extra outside the required answer.
+3. Return the answer strictly in this format:
+{
+  "review": "...",
+  "sentiment": "Positive" | "Negative" | "Unknown"
+}
+
+----------------------------------------------------------------------------------------
+✅ Example 3: Essay Evaluation
+
+You are an expert essay evaluator.
+Your task is to read the essay and give feedback.
+
+Here is the input essay:
+{essay_text}
+
+Instructions:
+1. Evaluate based on Clarity of Thought, Depth of Analysis, and Language Quality.
+2. Give score between 0–10 for each.
+3. Provide short feedback.
+4. Return the answer strictly in this format:
+{
+  "Clarity of Thought": {"score": ..., "feedback": "..."},
+  "Depth of Analysis": {"score": ..., "feedback": "..."},
+  "Language Quality": {"score": ..., "feedback": "..."},
+  "Overall Feedback": "..."
+}
+
+-------------------------------------------------------------------------------------
+
+zero_shot_prompt = PromptTemplate(
+    template="""
+    Task: {task}
+
+    Input: {input_text}
+
+    Instruction:
+    - Perform the task directly without any extra explanation.
+    - Return the final result only.
+
+    Answer:
+    """,
+    input_variables=["task", "input_text"]
+)
+Use Case: Sentiment classification, translation, summarization.
+
+--------------------------------------------------------------------------------------------------
+
+✅ 2. Few-Shot Prompting Template
+➡️ Model ko kuch examples dekar pattern samjhaya jata hai.
+few_shot_prompt = PromptTemplate(
+    template="""
+    Task: {task}
+
+    Examples:
+    Input: "The laptop is very fast and lightweight."
+    Output: Positive
+
+    Input: "The phone battery dies very quickly."
+    Output: Negative
+
+    Now classify the following:
+
+    Input: {input_text}
+    Output:
+    """,
+    input_variables=["task", "input_text"]
+)
+
+
+------------------------------------------------------------------------------------------------------
+
+✅ 3. Chain-of-Thought (CoT) Prompting Template
+➡️ Step-by-step reasoning karne ke liye.
+
+cot_prompt = PromptTemplate(
+    template="""
+    Task: {task}
+
+    Question: {question}
+
+    Instruction:
+    - First, think step by step and explain your reasoning.
+    - Then, provide the final answer in this format:
+      Answer: <final_result>
+    """,
+    input_variables=["task", "question"]
+)
+
+
