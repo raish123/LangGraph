@@ -1,9 +1,12 @@
 
 import streamlit as st
 from streamlit import session_state  # session_state dictionary user inputs aur app state ko memory mein store karta hai
-from backend_UI import workflow, HumanMessage, AIMessage, ChatbotState  # chatbot backend functionalities import kar rahe hain
+
 import uuid  # unique thread ID generate karne ke liye library
 import time
+# chatbot backend functionalities import kar rahe hain
+from backend_Langgraph_Database import *
+
 # ************************ Utility Functions *******************************************
 
 # Unique thread ID generate karne ke liye function
@@ -47,7 +50,7 @@ if "current_thread" not in st.session_state:
 
 # Agar chat_threads session state mein nahi hai to initialize karo
 if "chat_threads" not in st.session_state:
-    st.session_state['chat_threads'] = []
+    st.session_state['chat_threads'] = retrieve_all_unique_thread()
 
 # Current thread ko thread list mein add karo agar already nahi hai
 add_threads(st.session_state['thread_id'])
