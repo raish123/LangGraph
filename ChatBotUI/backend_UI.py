@@ -80,6 +80,3 @@ graph.add_edge("chat_node",END)
 #now compiling the workflow.
 workflow = graph.compile(checkpointer=checkpointer)
 
-
-##to show only the AI messages used below syntax.
-#response['message'][-1].content
