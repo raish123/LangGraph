@@ -1,0 +1,153 @@
+import streamlit as st
+from backend import *  # Import your chatbot-related logic
+import time
+import uuid
+
+# ****************Utility Function***************************************
+def generate_uuid_id():
+    """Generates a random UUID (Version 4) to use as a unique thread ID."""
+    return str(uuid.uuid4())
+
+def new_chat():
+    """Function to initialize a new chat session with a unique thread ID and name."""
+    # Clear the current chat history for a new conversation
+    st.session_state['chat_history'] = []
+    
+    # Generate a new unique thread ID
+    new_thread_id = generate_uuid_id()
+    st.session_state['thread_id'] = new_thread_id
+    
+    # Append the new thread ID to the list of all thread IDs
+    st.session_state['all_thread_id'].append(new_thread_id)
+    
+    # Assign a human readable name like "Chat 1", "Chat 2", etc.
+    new_name = f"Chat {len(st.session_state['all_thread_id'])}"
+    st.session_state['all_threads'][new_thread_id] = new_name
+
+# ****************Session State Initialization***********************
+
+# Initialize 'all_thread_id' if it doesn't exist
+if 'all_thread_id' not in st.session_state:
+    st.session_state['all_thread_id'] = checking_unique_thread_database()
+
+# Initialize 'all_threads' dictionary to map thread IDs to names
+if 'all_threads' not in st.session_state:
+    st.session_state['all_threads'] = {}
+    for idx, tid in enumerate(st.session_state['all_thread_id']):
+        st.session_state['all_threads'][tid] = f"Chat {idx+1}"
+
+# Check if chat_history 'key' already exists in session_state
+# Initialize 'chat_history' if it doesn't exist
+if 'chat_history' not in st.session_state:
+    st.session_state['chat_history'] = []
+
+# Initialize 'thread_id' if it doesn't exist and set up default chat
+# Check if thread_id 'key' already exists in session_state 
+# (for every user session would be different thread_id would be differnt thatswhy storing in session Memory mei)
+# if 'thread_id' not in st.session_state:
+#     new_id = generate_uuid_id()
+#     st.session_state['thread_id'] = new_id
+#     st.session_state['all_thread_id'].append(new_id)
+#     st.session_state['all_threads'][new_id] = "Chat 1"
+
+# ****************Sidebar - Display Threads with Names***********************
+st.sidebar.title("Conversational Chatbot")
+
+# Button to create a new chat session
+if st.sidebar.button("New Chat"):
+    new_chat()
+
+st.sidebar.markdown("### Older Chat Conversations")
+
+
+
+# Display all previous chats with their human readable names
+# Sidebar mein sab purane chats ko dikhane ke liye loop chalaya ja raha hai
+# Har chat ka naam (jo human readable hai) uske thread ID ke saath dikhaya jayega
+for tid in st.session_state['all_thread_id']:
+    
+    # Is thread ID ke liye stored naam ko get kar rahe hain
+    # Agar naam available nahi hai to "Unknown Chat" dikhayenge
+    name = st.session_state['all_threads'].get(tid, "Unknown Chat")
+    
+    # Sidebar mein ek button bana rahe hain jiska label chat ka naam hai
+    # Agar user is button par click kare to niche wale steps execute honge
+    
+    # **************************Note:- we have to ensure tha****************************
+    # Jab user kisi purane chat ke button par click kare
+    # Tab is thread ko current thread bana rahe hain
+    # Unique key add karna important hai
+    if st.sidebar.button(name, key=tid):
+        st.session_state['thread_id'] = tid
+    
+        # Chatbot ke workflow ko compile kar rahe hain
+        # Is workflow mein short term memory persistence ke liye checkpointer use ho raha hai
+        workflow = graph.compile(checkpointer=checkpointer_sqlite)
+        
+        # Workflow ke liye configuration tayyar kar rahe hain
+        # Yahan hum bata rahe hain ki kaunsa thread load karna hai
+        config1 = {'configurable': {'thread_id': tid}}
+        
+        # Workflow se saved state ko retrieve kar rahe hain
+        # Ismein purane messages etc. mil sakte hain
+        result = workflow.get_state(config=config1)
+        
+        # Agar state available hai aur usmein messages hain to unhe load karenge
+        if result and result.values and 'message' in result.values:
+            messages = result.values['message']
+            
+            # Session state mein chat history ko pehle empty kar rahe hain
+            st.session_state['chat_history'] = []
+            
+            # Har message ko loop karke session memory mein add kar rahe hain
+            for msg in messages:
+                st.session_state['chat_history'].append({
+                    "role": msg.type,    # Message kisne bheja – 'human' ya 'ai'
+                    "content": msg.content  # Actual message content
+                })
+
+
+# ****************Main Chat Display***********************
+# Show all messages from chat history in the app interface
+for message in st.session_state['chat_history']:
+    with st.chat_message(message["role"]):
+        st.markdown(message["content"])
+
+# ****************Chat Input and AI Response Handling***********************
+# Input box for the user to type messages
+prompt = st.chat_input("Type Here")
+
+if prompt:
+    # Add the user's message to the session state history
+    st.session_state['chat_history'].append({"role": "user", "content": prompt})
+    
+    # Display the user's message in the chat interface
+    with st.chat_message("user"):
+        st.write(prompt)
+    
+    # Function to generate AI response word by word for streaming effect
+    def response_generator(thread_id):
+        # Compile the chatbot workflow
+        workflow = graph.compile(checkpointer=checkpointer_sqlite)
+        config1 = {'configurable': {'thread_id': thread_id}}
+        
+        # Initialize chatbot state with the user's message
+        initial_state = ChatBotState(message=[HumanMessage(content=prompt)])
+        
+        # Invoke the chatbot workflow and get the AI's response
+        final = workflow.invoke(input=initial_state, config=config1)
+        ai_response = final['message'][-1].content
+        
+        # Stream the response one word at a time with slight delay
+        for word in ai_response.split():
+            yield word + " "
+            time.sleep(0.05)
+    
+    # Display the AI's response in the chat interface
+    with st.chat_message("assistant"):
+        response = st.write_stream(
+            response_generator(thread_id=st.session_state['thread_id'])
+        )
+    
+    # Add the AI's response to the session state history
+    st.session_state['chat_history'].append({"role": "assistant", "content": response})
