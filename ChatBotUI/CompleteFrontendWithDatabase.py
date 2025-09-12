@@ -124,11 +124,21 @@ if user_input:
         with st.chat_message(name="user"):
             st.write(user_input)
         
+        
+        
+        
+        
         # typing effect ko simulate karne ke liye function
         def typing_effect(user_input, thread_id):
             # AI ke liye initial state prepare karna
             initial_state = ChatbotState(message=[HumanMessage(content=user_input)])
-            config1 = {'configurable': {'thread_id': thread_id}}
+            config1 = {
+                'configurable': {'thread_id': thread_id},
+                #using thread_id grouping all messages showing them in langsmith with turn msg form mei.
+                "metadata":{'thread_id': thread_id}, 
+                "run_name":'chat_turn'
+                
+                }
             
             # workflow invoke karke AI ka response lena
             response = workflow.invoke(input=initial_state, config=config1)

@@ -18,6 +18,11 @@ from langgraph.checkpoint.memory import InMemorySaver #saving state in ram memor
 from langgraph.checkpoint.sqlite import SqliteSaver
 import sqlite3
 
+#from langgraph import traceable
+
+import os
+os.environ['LANGCHAIN_PROJECT'] = "CHATBOT-GUI MONITORING"
+
 load_dotenv()
 
 #first creating sqlite database connection.
