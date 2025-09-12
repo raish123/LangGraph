@@ -125,9 +125,6 @@ if user_input:
             st.write(user_input)
         
         
-        
-        
-        
         # typing effect ko simulate karne ke liye function
         def typing_effect(user_input, thread_id):
             # AI ke liye initial state prepare karna
