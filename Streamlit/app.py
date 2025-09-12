@@ -3,7 +3,13 @@ from backend import *  # Import your chatbot-related logic
 import time
 import uuid
 
-# ****************Utility Function***************************************
+
+# ************* Now properly organize and save traces based on Thread ID, consider implementing a structured logging system.*************** 
+
+
+
+
+# ****************Utility Function*****************************************************
 def generate_uuid_id():
     """Generates a random UUID (Version 4) to use as a unique thread ID."""
     return str(uuid.uuid4())

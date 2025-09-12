@@ -27,6 +27,10 @@ checkpointer_sqlite = SqliteSaver(
 )
 
 
+import os
+os.environ['LANGCHAIN_PROJECT'] = "Interactive-ChatBot-Tracing"
+
+
 #to load the api key from env file 
 from dotenv import load_dotenv 
 
